@@ -126,8 +126,12 @@ ModelData *scene_entity_get_model(Entity *entity) {
 }
 
 void scene_load_skybox(const char *skybox_directory) {
-    if (!skybox_model.meshCount)
-        skybox_model = LoadModel("resources/skybox.obj");
+    if (!skybox_model.meshCount) {
+        char skybox_model_path[MAX_PATH_LENGTH + 1] = __FILE__;
+        strip_filename(skybox_model_path, MAX_PATH_LENGTH);
+        strcat(skybox_model_path, "../resources/skybox.obj");
+        skybox_model = LoadModel(skybox_model_path);
+    }
 
     char *skybox_name = skyboxes_get_name(scene.skybox_handle);
     assert(skybox_name);
