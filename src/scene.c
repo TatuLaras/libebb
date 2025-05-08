@@ -1,6 +1,7 @@
 #include "scene.h"
 
 #include "assets.h"
+#include "common.h"
 #include "handles.h"
 #include "model_files.h"
 #include "skyboxes.h"

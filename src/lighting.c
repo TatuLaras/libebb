@@ -1,5 +1,6 @@
 #include "lighting.h"
 
+#include "common.h"
 #include "handles.h"
 #include "model_vector.h"
 #include "scene.h"
@@ -13,8 +14,6 @@
 
 #define STARTING_SIZE 4
 #define GROWTH_FACTOR 2
-
-static const char *shader_path = "resources/shaders/vertex_lighting.vert";
 
 LightingScene lighting_scene = {0};
 
@@ -115,6 +114,10 @@ void lighting_scene_free(void) {
 }
 
 LightingGroupHandle lighting_group_create(Color ambient_color) {
+    char shader_path[MAX_PATH_LENGTH + 1] = __FILE__;
+    strip_filename(shader_path, MAX_PATH_LENGTH);
+    strcat(shader_path, "resources/shaders/vertex_lighting.vert");
+
     LightingGroup group = {.shader = LoadShader(shader_path, 0),
                            .ambient_color = ambient_color};
 

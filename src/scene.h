@@ -8,8 +8,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define MAX_PATH_LENGTH 4096
-
 // Base entity data
 typedef struct {
     AssetHandle asset_handle;
