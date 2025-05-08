@@ -44,11 +44,11 @@ Entity *scene_get_entity(EntityHandle handle);
 // Gets the model of an entity.
 ModelData *scene_entity_get_model(Entity *entity);
 // Loads the currently set skybox as scene background.
-void scene_load_skybox(void);
+void scene_load_skybox(const char *skybox_directory);
 // Renders the current skybox as scene background.
 void scene_render_skybox(Camera3D camera);
 // Sets the current skybox
-void scene_set_skybox(SkyboxHandle handle);
+void scene_set_skybox(SkyboxHandle handle, const char *skybox_directory);
 
 void scene_render_properties_menu(void);
 
