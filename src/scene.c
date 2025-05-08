@@ -2,7 +2,6 @@
 
 #include "assets.h"
 #include "handles.h"
-#include "lighting.h"
 #include "model_files.h"
 #include "skyboxes.h"
 #include <assert.h>

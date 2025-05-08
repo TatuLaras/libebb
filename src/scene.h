@@ -35,7 +35,8 @@ void scene_free(void);
 
 // Adds a new entity to the scene. Assumes a raylib context is already
 // initialized. Returns 1 on error.
-int scene_add(Entity entity, EntityHandle *out_entity_handle);
+int scene_add(Entity entity, EntityHandle *out_entity_handle,
+              const char *asset_directory);
 // Removes an entity from the scene by `handle`.
 void scene_remove(EntityHandle handle);
 // Gets entity of `scene` by `id`, returns 0 when no entity for that index

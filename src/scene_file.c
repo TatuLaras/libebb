@@ -163,7 +163,7 @@ void scene_file_store(FILE *fp) {
     genbuf_free(&content);
 }
 
-int scene_file_load(FILE *fp) {
+int scene_file_load(FILE *fp, const char *skybox_directory) {
     printf("INFO: loading scene file.\n");
 
     fseek(fp, 0, SEEK_END);
@@ -286,7 +286,7 @@ int scene_file_load(FILE *fp) {
 
         SkyboxHandle skybox_handle = 0;
         if (!skyboxes_get_handle(skybox.name, &skybox_handle)) {
-            scene_set_skybox(skybox_handle);
+            scene_set_skybox(skybox_handle, skybox_directory);
         } else
             fprintf(stderr, "WARNING: Skybox %s no longer exists.\n",
                     skybox.name);

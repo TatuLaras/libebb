@@ -88,6 +88,6 @@ void scene_file_store(FILE *fp);
 // empty scene along with lighting groups needs to be initalized before calling
 // this function.
 // Currently assumes there is only one light group and it's handle is 0.
-int scene_file_load(FILE *fp);
+int scene_file_load(FILE *fp, const char *skybox_directory);
 
 #endif
