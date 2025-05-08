@@ -116,7 +116,7 @@ void lighting_scene_free(void) {
 LightingGroupHandle lighting_group_create(Color ambient_color) {
     char shader_path[MAX_PATH_LENGTH + 1] = __FILE__;
     strip_filename(shader_path, MAX_PATH_LENGTH);
-    strcat(shader_path, "resources/shaders/vertex_lighting.vert");
+    strcat(shader_path, "../resources/shaders/vertex_lighting.vert");
 
     LightingGroup group = {.shader = LoadShader(shader_path, 0),
                            .ambient_color = ambient_color};
