@@ -1,8 +1,8 @@
 #include "orbital_controls.h"
 #include <raymath.h>
 
-#define ROTATE_SENSITIVITY_X 0.006
-#define ROTATE_SENSITIVITY_Y 0.008
+#define ROTATE_SENSITIVITY_X 0.004
+#define ROTATE_SENSITIVITY_Y 0.006
 #define SHIFT_SENSITIVITY_X 0.006
 #define SHIFT_SENSITIVITY_Y 0.008
 
