@@ -163,7 +163,8 @@ void scene_file_store(FILE *fp) {
     genbuf_free(&content);
 }
 
-int scene_file_load(FILE *fp, const char *skybox_directory) {
+int scene_file_load(FILE *fp, const char *skybox_directory,
+                    const char *asset_directory) {
     printf("INFO: loading scene file.\n");
 
     fseek(fp, 0, SEEK_END);
@@ -270,7 +271,7 @@ int scene_file_load(FILE *fp, const char *skybox_directory) {
                 .transform = entity.transform,
                 .ignore_raycast = entity.ignore_raycast,
             },
-            &entity_handle);
+            &entity_handle, asset_directory);
 
         lighting_group_add_entity(0, scene_get_entity(entity_handle));
 
