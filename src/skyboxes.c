@@ -1,7 +1,5 @@
 #include "skyboxes.h"
 
-#include "scene.h"
-#include "settings.h"
 #include "string_vector.h"
 #include <assert.h>
 #include <dirent.h>
@@ -55,18 +53,11 @@ static inline void get_aseprite_basenames(const char *directory,
     return;
 }
 
-void skyboxes_fetch_all(void) {
+void skyboxes_fetch_all(const char *skybox_directory) {
     if (!skybox_list.data)
         skybox_list = stringvec_init();
 
-    if (*settings.project_directory == 0)
-        return;
-
     stringvec_truncate(&skybox_list);
-
-    char skybox_directory[MAX_PATH_LENGTH + 1] = {0};
-    strcpy(skybox_directory, settings.project_directory);
-    strcat(skybox_directory, "skyboxes/");
 
     get_aseprite_basenames(skybox_directory, &skybox_list);
 }

@@ -1,6 +1,9 @@
 #ifndef _LIGHTING
 #define _LIGHTING
 
+// A module for handling lights and data to be sent to the vertex lighting
+// shader.
+
 #include "scene.h"
 #include <raylib.h>
 #include <stdalign.h>
@@ -56,6 +59,7 @@ typedef struct {
 
 extern LightingScene lighting_scene;
 
+// Call this before anything else in this module.
 void lighting_scene_init(void);
 void lighting_scene_free(void);
 
@@ -82,8 +86,11 @@ void lighting_group_set_enabled(LightingGroupHandle handle, uint32_t enabled);
 void update_shader_data(LightingGroupHandle handle);
 // Updates a single light source's data in the lighting group shader. Returns 1
 // on out-of-bound `handle` s.
+//
+// `offset`: An offset added to the light sources position. Used when
+// previewing position changes for example.
 int light_source_update(LightingGroupHandle group_handle,
-                        LightSourceHandle light_handle);
+                        LightSourceHandle light_handle, Vector3 offset);
 
 // Get lighting group by handle.
 LightingGroup *lighting_scene_get_group(LightingGroupHandle handle);

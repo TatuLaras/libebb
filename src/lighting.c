@@ -1,10 +1,8 @@
 #include "lighting.h"
 
 #include "handles.h"
-#include "lighting_edit.h"
 #include "model_vector.h"
 #include "scene.h"
-#include "transform.h"
 #include <assert.h>
 #include <raylib.h>
 #include <raymath.h>
@@ -49,7 +47,7 @@ void update_shader_data(LightingGroupHandle handle) {
                    &group->is_shading_disabled, SHADER_UNIFORM_INT);
 
     for (size_t i = 0; i < LIGHTING_MAX_LIGHTS_PER_GROUP; i++) {
-        if (light_source_update(handle, i))
+        if (light_source_update(handle, i, Vector3Zero()))
             break;
     }
 }
@@ -62,7 +60,7 @@ LightingGroup *lighting_scene_get_group(LightingGroupHandle handle) {
 }
 
 int light_source_update(LightingGroupHandle group_handle,
-                        LightSourceHandle light_handle) {
+                        LightSourceHandle light_handle, Vector3 offset) {
     LightingGroup *group = lighting_scene_get_group(group_handle);
 
     assert(group);
@@ -86,15 +84,8 @@ int light_source_update(LightingGroupHandle group_handle,
     SetShaderValue(group->shader, light->type_location, &light->type,
                    SHADER_UNIFORM_INT);
 
-    // If a transform is being performed we want to preview the effects of the
-    // lighting before committing, hence this.
-    Vector3 light_pos = light->position;
-    if (lighting_edit_state.is_light_selected &&
-        lighting_edit_state.currently_selected_light == light_handle &&
-        transform_operation.mode != TRANSFORM_NONE) {
-        light_pos =
-            Vector3Add(light_pos, lighting_edit_transform_get_delta_vector());
-    }
+    Vector3 light_pos = Vector3Add(light_pos, offset);
+
     float position[3] = {light_pos.x, light_pos.y, light_pos.z};
     SetShaderValue(group->shader, light->position_location, position,
                    SHADER_UNIFORM_VEC3);

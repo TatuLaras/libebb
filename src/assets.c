@@ -1,7 +1,5 @@
 #include "assets.h"
 
-#include "scene.h"
-#include "settings.h"
 #include "string_vector.h"
 #include <assert.h>
 #include <dirent.h>
@@ -48,18 +46,11 @@ static inline void get_glb_basenames(const char *directory,
     return;
 }
 
-void assets_fetch_all(void) {
+void assets_fetch_all(const char *asset_directory) {
     if (!asset_list.data)
         asset_list = stringvec_init();
 
-    if (*settings.project_directory == 0)
-        return;
-
     stringvec_truncate(&asset_list);
-
-    char asset_directory[MAX_PATH_LENGTH + 1] = {0};
-    strcpy(asset_directory, settings.project_directory);
-    strcat(asset_directory, "assets/");
 
     get_glb_basenames(asset_directory, &asset_list);
 }

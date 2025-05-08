@@ -9,8 +9,8 @@
 
 extern StringVector skybox_list;
 
-// Gets the list of all skyboxes from the skybox directory to the skybox list.
-void skyboxes_fetch_all(void);
+// Gets the list of all skyboxes from `skybox_directory` to the skybox list.
+void skyboxes_fetch_all(const char *skybox_directory);
 char *skyboxes_get_name(SkyboxHandle handle);
 // Writes handle of skybox `name` into `out_handle`. Returns 1 if there is no
 // such skybox.
