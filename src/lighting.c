@@ -83,7 +83,7 @@ int light_source_update(LightingGroupHandle group_handle,
     SetShaderValue(group->shader, light->type_location, &light->type,
                    SHADER_UNIFORM_INT);
 
-    Vector3 light_pos = Vector3Add(light_pos, offset);
+    Vector3 light_pos = Vector3Add(light->position, offset);
 
     float position[3] = {light_pos.x, light_pos.y, light_pos.z};
     SetShaderValue(group->shader, light->position_location, position,
