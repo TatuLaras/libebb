@@ -65,6 +65,11 @@ void lighting_scene_free(void);
 
 // Creates new empty `LightingGroup` inside lighting scene.
 LightingGroupHandle lighting_group_create(Color ambient_color);
+
+// Adds a new material to the lighting group so it will be affected by the light
+// sources in that group.
+void lighting_group_add_material(LightingGroupHandle group_handle,
+                                 Material *material);
 // Adds a new entity to the lighting group so it will be affected by the light
 // sources in that group.
 void lighting_group_add_entity(LightingGroupHandle handle, Entity *entity);

@@ -7,6 +7,7 @@
 // Loads an aseprite file corresponding to the model file `filepath` as a
 // texture to `model` if one exists.
 void try_load_corresponding_texture(const char *filepath, Model *model);
-void load_aseprite_texture(const char *filepath, Model *model);
+// Load .aseprite file as a GPU texture.
+Texture load_aseprite_texture(const char *filepath);
 
 #endif

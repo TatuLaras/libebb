@@ -27,22 +27,24 @@ static char *path_get_corresponding_texture_file(const char *src) {
     return destination;
 }
 
-void load_aseprite_texture(const char *filepath, Model *model) {
+Texture load_aseprite_texture(const char *filepath) {
     Image *image = aseprite_load_as_image(filepath);
     if (!image)
-        return;
+        return (Texture){0};
 
     Texture2D texture = LoadTextureFromImage(*image);
     UnloadImage(*image);
     free(image);
     if (!texture.id)
-        return;
+        return (Texture){0};
 
-    model->materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+    return texture;
 }
 
 void try_load_corresponding_texture(const char *filepath, Model *model) {
     char *texture_file = path_get_corresponding_texture_file(filepath);
-    load_aseprite_texture(texture_file, model);
+    Texture texture = load_aseprite_texture(texture_file);
+    if (texture.id)
+        model->materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
     free(texture_file);
 }

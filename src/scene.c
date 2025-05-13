@@ -140,7 +140,11 @@ void scene_load_skybox(const char *skybox_directory) {
     strcpy(path, skybox_directory);
     strcat(path, skybox_name);
     strcat(path, ".aseprite");
-    load_aseprite_texture(path, &skybox_model);
+
+    Texture skybox_texture = load_aseprite_texture(path);
+    if (skybox_texture.id)
+        skybox_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture =
+            skybox_texture;
 }
 
 void scene_set_skybox(SkyboxHandle handle, const char *skybox_directory) {

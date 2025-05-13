@@ -128,16 +128,20 @@ LightingGroupHandle lighting_group_create(Color ambient_color) {
     return lighting_scene_add_group(group);
 }
 
-void lighting_group_add_entity(LightingGroupHandle group_handle,
-                               Entity *entity) {
+void lighting_group_add_material(LightingGroupHandle group_handle,
+                                 Material *material) {
     LightingGroup *group = lighting_scene_get_group(group_handle);
     if (!group)
         return;
+    material->shader = group->shader;
+}
 
+void lighting_group_add_entity(LightingGroupHandle group_handle,
+                               Entity *entity) {
     entity->lighting_group_handle = group_handle;
     ModelData *model_data = scene_entity_get_model(entity);
     assert(model_data->model.meshCount);
-    model_data->model.materials[0].shader = group->shader;
+    lighting_group_add_material(group_handle, &model_data->model.materials[0]);
 }
 
 int lighting_group_add_light(LightingGroupHandle group_handle,

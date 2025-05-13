@@ -3,8 +3,8 @@
 
 #define ROTATE_SENSITIVITY_X 0.004
 #define ROTATE_SENSITIVITY_Y 0.006
-#define SHIFT_SENSITIVITY_X 0.006
-#define SHIFT_SENSITIVITY_Y 0.008
+#define SHIFT_SENSITIVITY_X 0.0013
+#define SHIFT_SENSITIVITY_Y 0.0013
 
 #define BASE_ZOOM_SENSITIVITY 0.08
 #define DRAG_ZOOM_SENSITIVITY_MULTIPLIER 0.02
@@ -29,8 +29,10 @@ void orbital_camera_update(Camera *camera) {
 
     if (IsKeyDown(KEY_LEFT_SHIFT)) {
         Vector3 local_y_axis = Vector3CrossProduct(local_z_axis, local_x_axis);
-        float shift_x = -mouse_delta.x * SHIFT_SENSITIVITY_X;
-        float shift_y = -mouse_delta.y * SHIFT_SENSITIVITY_Y;
+        float shift_x =
+            -mouse_delta.x * SHIFT_SENSITIVITY_X * Vector3Length(target_to_pos);
+        float shift_y =
+            -mouse_delta.y * SHIFT_SENSITIVITY_Y * Vector3Length(target_to_pos);
         camera->target =
             Vector3Add(camera->target, Vector3Scale(local_x_axis, shift_x));
         camera->target =
