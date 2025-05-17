@@ -3,6 +3,7 @@
 
 // Handling of a heightmap terrain with texture mixing.
 
+#include "raycast.h"
 #include <raylib.h>
 #include <raymath.h>
 #include <stddef.h>
@@ -20,6 +21,7 @@ typedef struct {
     uint32_t width;
     size_t size;
     Material material;
+    Mesh mesh;
 } Terrain;
 
 extern Terrain terrain;
@@ -37,10 +39,16 @@ BoundingBox terrain_get_bounds(void);
 void terrain_resize(uint32_t width);
 
 // Generates a GPU mesh from terrain height data.
-Mesh terrain_generate_mesh(void);
+void terrain_generate_mesh(void);
+
+Mesh *terrain_get_mesh(void);
 
 // Loads texture into a shader location to be used for texture painting with
 // asset slot `slot`.
 void terrain_bind_texture(uint8_t slot, Texture texture);
+
+// Casts a `ray` into the terrain and returns information on whether it was hit
+// and at which point in world coordinates.
+RayCollision terrain_raycast(Ray ray);
 
 #endif

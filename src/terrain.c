@@ -1,6 +1,7 @@
 #include "terrain.h"
 
 #include "lighting.h"
+#include "raycast.h"
 #include <assert.h>
 #include <math.h>
 #include <raylib.h>
@@ -96,18 +97,30 @@ static inline Vector4 datapoint_position(size_t i) {
     };
 }
 
-Mesh terrain_generate_mesh(void) {
+Mesh *terrain_get_mesh(void) {
+    if (!terrain.mesh.vaoId)
+        return 0;
+    return &terrain.mesh;
+}
+
+void terrain_generate_mesh(void) {
+    if (terrain.mesh.vaoId)
+        UnloadMesh(terrain.mesh);
+
     uint32_t width_cells = terrain.width - 1;
     uint64_t cell_count = width_cells * width_cells;
 
-    Mesh mesh = {0};
-    mesh.triangleCount = cell_count * 2;
-    mesh.vertexCount = mesh.triangleCount * 3;
-    mesh.vertices = malloc(mesh.vertexCount * 3 * sizeof(float));
-    mesh.colors = malloc(mesh.vertexCount * 4 * sizeof(float));
-    memset(mesh.colors, 0xff, mesh.vertexCount * 4 * sizeof(float));
-    mesh.texcoords = malloc(mesh.vertexCount * 2 * sizeof(float));
-    mesh.normals = malloc(mesh.vertexCount * 3 * sizeof(float));
+    terrain.mesh = (Mesh){0};
+    terrain.mesh.triangleCount = cell_count * 2;
+    terrain.mesh.vertexCount = terrain.mesh.triangleCount * 3;
+    terrain.mesh.vertices =
+        malloc(terrain.mesh.vertexCount * 3 * sizeof(float));
+    terrain.mesh.colors = malloc(terrain.mesh.vertexCount * 4 * sizeof(float));
+    memset(terrain.mesh.colors, 0xff,
+           terrain.mesh.vertexCount * 4 * sizeof(float));
+    terrain.mesh.texcoords =
+        malloc(terrain.mesh.vertexCount * 2 * sizeof(float));
+    terrain.mesh.normals = malloc(terrain.mesh.vertexCount * 3 * sizeof(float));
 
     uint32_t x;
     uint32_t y;
@@ -146,46 +159,56 @@ Mesh terrain_generate_mesh(void) {
             for (uint8_t vert = 0; vert < 3; vert++) {
                 uint8_t corner = (start_corner + vert + tri * 2) % 4;
 
-                mesh.vertices[triangle_i + vert * 3 + 0] = corners[corner].x;
-                mesh.vertices[triangle_i + vert * 3 + 1] = corners[corner].y;
-                mesh.vertices[triangle_i + vert * 3 + 2] = corners[corner].z;
+                terrain.mesh.vertices[triangle_i + vert * 3 + 0] =
+                    corners[corner].x;
+                terrain.mesh.vertices[triangle_i + vert * 3 + 1] =
+                    corners[corner].y;
+                terrain.mesh.vertices[triangle_i + vert * 3 + 2] =
+                    corners[corner].z;
 
-                mesh.texcoords[quad * 12 + tri * 6 + vert * 2 + 0] =
+                terrain.mesh.texcoords[quad * 12 + tri * 6 + vert * 2 + 0] =
                     corner_uvs[corner].x * 0.5 + (x % 2) * 0.5;
-                mesh.texcoords[quad * 12 + tri * 6 + vert * 2 + 1] =
+                terrain.mesh.texcoords[quad * 12 + tri * 6 + vert * 2 + 1] =
                     corner_uvs[corner].y * 0.5 + (y % 2) * 0.5;
 
                 // Textures
 
-                mesh.colors[quad * 24 + tri * 12 + vert * 4 + 1] =
+                terrain.mesh.colors[quad * 24 + tri * 12 + vert * 4 + 1] =
                     (uint8_t)(corners[corner].w) % 10;
             }
 
             // Normal vector
-            Vector3 *v1 = (Vector3 *)(mesh.vertices + triangle_i + 0 * 3);
-            Vector3 *v2 = (Vector3 *)(mesh.vertices + triangle_i + 1 * 3);
-            Vector3 *v3 = (Vector3 *)(mesh.vertices + triangle_i + 2 * 3);
+            Vector3 *v1 =
+                (Vector3 *)(terrain.mesh.vertices + triangle_i + 0 * 3);
+            Vector3 *v2 =
+                (Vector3 *)(terrain.mesh.vertices + triangle_i + 1 * 3);
+            Vector3 *v3 =
+                (Vector3 *)(terrain.mesh.vertices + triangle_i + 2 * 3);
 
             Vector3 triangle_normal = Vector3Normalize(Vector3CrossProduct(
                 Vector3Subtract(*v2, *v1), Vector3Subtract(*v3, *v1)));
             for (uint8_t vert = 0; vert < 3; vert++) {
-                mesh.normals[triangle_i + vert * 3 + 0] = triangle_normal.x;
-                mesh.normals[triangle_i + vert * 3 + 1] = triangle_normal.y;
-                mesh.normals[triangle_i + vert * 3 + 2] = triangle_normal.z;
+                terrain.mesh.normals[triangle_i + vert * 3 + 0] =
+                    triangle_normal.x;
+                terrain.mesh.normals[triangle_i + vert * 3 + 1] =
+                    triangle_normal.y;
+                terrain.mesh.normals[triangle_i + vert * 3 + 2] =
+                    triangle_normal.z;
             }
         }
     }
 
     // Upload mesh data from CPU (RAM) to GPU (VRAM) memory
-    UploadMesh(&mesh, false);
-
-    return mesh;
+    UploadMesh(&terrain.mesh, false);
 }
 
 void terrain_free(void) {
     if (terrain.heights)
         free(terrain.heights);
+    if (terrain.mesh.vaoId)
+        UnloadMesh(terrain.mesh);
     terrain.heights = 0;
+    terrain.mesh = (Mesh){0};
 }
 
 void terrain_bind_texture(uint8_t slot, Texture texture) {
@@ -196,4 +219,15 @@ void terrain_bind_texture(uint8_t slot, Texture texture) {
         GetShaderLocation(terrain.material.shader,
                           TextFormat("textures[%i]", slot));
     terrain.material.maps[MATERIAL_MAP_ALBEDO + slot].texture = texture;
+}
+
+RayCollision terrain_raycast(Ray ray) {
+    RayCollision terrain_collision =
+        GetRayCollisionMesh(ray, terrain.mesh, MatrixIdentity());
+
+    if (!terrain_collision.hit) {
+        terrain_collision.point = raycast_ground_intersection(ray, 0);
+        terrain_collision.hit = 1;
+    }
+    return terrain_collision;
 }
