@@ -37,12 +37,11 @@ typedef struct {
     SceneFileFlags flags;
     uint16_t header_size;
 
-    uint16_t lighting_group_count;
     uint32_t asset_count;
     uint32_t light_source_count;
     uint64_t entity_count;
 
-    uint16_t lighting_group_size;
+    uint16_t lighting_scene_size;
     uint16_t asset_size;
     uint16_t light_source_size;
     uint16_t entity_size;
@@ -57,7 +56,7 @@ typedef struct {
 
 typedef struct {
     Color ambient_color;
-} SceneFileLightingGroup;
+} SceneFileLightingScene;
 
 typedef struct {
     Color color;

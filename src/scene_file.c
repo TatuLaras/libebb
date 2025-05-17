@@ -36,51 +36,33 @@ serialize_asset_data_into_buf(GeneralBuffer *buf,
 
 static inline void
 serialize_lighting_data_into_buf(GeneralBuffer *buf,
-                                 uint16_t *out_light_group_table_entries,
                                  size_t *out_light_source_table_entries) {
-    GeneralBuffer light_sources = genbuf_init();
-    LightingGroup *group = 0;
+    // Lighting scene
+    SceneFileLightingScene file_lighting_scene = {
+        .ambient_color = lighting_scene.ambient_color};
+    genbuf_append(buf, &file_lighting_scene, sizeof(SceneFileLightingScene));
+
+    // Light sources
     LightSource *light = 0;
-    LightingGroupHandle group_handle = 0;
     LightSourceHandle light_handle = 0;
     uint16_t lighting_group_table_entries = 0;
     size_t light_source_table_entries = 0;
-    while ((group = lighting_scene_get_group(group_handle))) {
-        if (group->is_deleted)
-            continue;
 
-        SceneFileLightingGroup scene_file_group = {.ambient_color =
-                                                       group->ambient_color};
-        genbuf_append(buf, &scene_file_group, sizeof(SceneFileLightingGroup));
-
-        // Light sources
-        light_handle = 0;
-        while ((light = lighting_group_get_light(group_handle, light_handle))) {
-            SceneFileLightSource scene_file_light = {
-                .light_group_index = lighting_group_table_entries,
-                .color = light->color,
-                .is_disabled = light->is_disabled,
-                .type = light->type,
-                .intensity = light->intensity,
-                .intensity_granular = light->intensity_granular,
-                .intensity_cap = light->intensity_cap,
-                .position = light->position,
-            };
-            genbuf_append(&light_sources, &scene_file_light,
-                          sizeof(SceneFileLightSource));
-            light_source_table_entries++;
-            light_handle++;
-        }
-
-        lighting_group_table_entries++;
-        group_handle++;
+    while ((light = lighting_scene_get_light(light_handle++))) {
+        SceneFileLightSource scene_file_light = {
+            .light_group_index = lighting_group_table_entries,
+            .color = light->color,
+            .is_disabled = light->is_disabled,
+            .type = light->type,
+            .intensity = light->intensity,
+            .intensity_granular = light->intensity_granular,
+            .intensity_cap = light->intensity_cap,
+            .position = light->position,
+        };
+        genbuf_append(buf, &scene_file_light, sizeof(SceneFileLightSource));
+        light_source_table_entries++;
     }
 
-    genbuf_append(buf, light_sources.data, light_sources.data_size);
-    genbuf_free(&light_sources);
-
-    if (out_light_group_table_entries)
-        *out_light_group_table_entries = lighting_group_table_entries;
     if (out_light_source_table_entries)
         *out_light_source_table_entries = light_source_table_entries;
 }
@@ -130,10 +112,8 @@ void scene_file_store(FILE *fp) {
     size_t asset_table_entries = 0;
     serialize_asset_data_into_buf(&content, &asset_table_entries);
 
-    uint16_t lighting_group_table_entries = 0;
     size_t light_source_table_entries = 0;
-    serialize_lighting_data_into_buf(&content, &lighting_group_table_entries,
-                                     &light_source_table_entries);
+    serialize_lighting_data_into_buf(&content, &light_source_table_entries);
 
     size_t entity_table_entries = 0;
     serialize_entity_data_into_buf(&content, &entity_table_entries);
@@ -145,14 +125,13 @@ void scene_file_store(FILE *fp) {
         .magic = SCENE_FILE_MAGIC,
 
         .asset_count = asset_table_entries,
-        .lighting_group_count = lighting_group_table_entries,
         .light_source_count = light_source_table_entries,
         .entity_count = entity_table_entries,
         .skybox_count = skybox_entry_count,
 
         .header_size = sizeof(SceneFileHeader),
         .asset_size = sizeof(SceneFileAsset),
-        .lighting_group_size = sizeof(SceneFileLightingGroup),
+        .lighting_scene_size = sizeof(SceneFileLightingScene),
         .light_source_size = sizeof(SceneFileLightSource),
         .entity_size = sizeof(SceneFileEntity),
         .skybox_size = sizeof(SceneFileSkybox),
@@ -189,10 +168,6 @@ int scene_file_load(FILE *fp, const char *skybox_directory,
         free(file_buffer);
         return 1;
     };
-    if (header_ptr->header_size > sizeof(SceneFileHeader)) {
-        free(file_buffer);
-        return 1;
-    }
 
     //  NOTE: In case a struct has more stuff added onto it later on,
     //  this way we can still read old files and just have the new fields be
@@ -203,7 +178,7 @@ int scene_file_load(FILE *fp, const char *skybox_directory,
 
     size_t assumed_file_size =
         header.header_size + header.asset_size * header.asset_count +
-        header.lighting_group_size * header.lighting_group_count +
+        header.lighting_scene_size +
         header.light_source_size * header.light_source_count +
         header.entity_size * header.entity_count +
         header.skybox_size * header.skybox_count;
@@ -217,16 +192,11 @@ int scene_file_load(FILE *fp, const char *skybox_directory,
 
     offset += header.asset_size * header.asset_count;
 
-    for (size_t i = 0; i < header.lighting_group_count; i++) {
-        SceneFileLightingGroup group = {0};
-        memcpy(&group, offset + i * header.lighting_group_size,
-               header.lighting_group_size);
+    SceneFileLightingScene file_lighting_scene = {0};
+    memcpy(&file_lighting_scene, offset, header.lighting_scene_size);
+    lighting_scene.ambient_color = file_lighting_scene.ambient_color;
 
-        LightingGroup *default_group = lighting_scene_get_group(0);
-        default_group->ambient_color = group.ambient_color;
-    }
-
-    offset += header.lighting_group_size * header.lighting_group_count;
+    offset += header.lighting_scene_size;
 
     for (size_t i = 0; i < header.light_source_count; i++) {
 
@@ -234,8 +204,7 @@ int scene_file_load(FILE *fp, const char *skybox_directory,
         memcpy(&light, offset + i * header.light_source_size,
                header.light_source_size);
 
-        lighting_group_add_light(
-            0,
+        lighting_scene_add_light(
             (LightSource){
                 .is_disabled = light.is_disabled,
                 .intensity = light.intensity,
@@ -273,7 +242,7 @@ int scene_file_load(FILE *fp, const char *skybox_directory,
             },
             &entity_handle, asset_directory);
 
-        lighting_group_add_entity(0, scene_get_entity(entity_handle));
+        lighting_scene_add_entity(scene_get_entity(entity_handle));
 
         Entity *added_entity = scene_get_entity(entity_handle);
         assert(added_entity);

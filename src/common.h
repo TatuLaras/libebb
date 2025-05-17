@@ -24,4 +24,7 @@ Vector3 matrix_get_position(Matrix transform);
 // `n` as a max limit for iteration.
 void strip_filename(char *filepath, size_t n);
 
+// Returns 1 if `string` has suffix `suffix`.
+int has_suffix(const char *string, const char *suffix);
+
 #endif

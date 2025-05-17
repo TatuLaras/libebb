@@ -1,5 +1,6 @@
 #include "assets.h"
 
+#include "filesystem.h"
 #include "string_vector.h"
 #include <assert.h>
 #include <dirent.h>
@@ -10,49 +11,13 @@
 
 StringVector asset_list = {0};
 
-// Returns 1 if file ends in .glb.
-static inline int is_glb(char *filename) {
-    size_t length = strlen(filename);
-    if (length < 4)
-        return 0;
-
-    int holds_true = 1;
-    holds_true = holds_true && filename[length - 4] == '.';
-    holds_true = holds_true && filename[length - 3] == 'g';
-    holds_true = holds_true && filename[length - 2] == 'l';
-    holds_true = holds_true && filename[length - 1] == 'b';
-
-    return holds_true;
-}
-
-// Appends a list of filenames (without extension) of all the .glb files in
-// `directory` into the StringVector `destination`.
-static inline void get_glb_basenames(const char *directory,
-                                     StringVector *destination) {
-    DIR *d;
-    struct dirent *dir;
-    d = opendir(directory);
-    if (!d)
-        return;
-
-    while ((dir = readdir(d)) != NULL) {
-        if (dir->d_type == DT_REG && is_glb(dir->d_name))
-            // The "- 4" strips the .glb extension
-            stringvec_append(destination, dir->d_name, strlen(dir->d_name) - 4);
-    }
-
-    closedir(d);
-
-    return;
-}
-
 void assets_fetch_all(const char *asset_directory) {
     if (!asset_list.data)
         asset_list = stringvec_init();
 
     stringvec_truncate(&asset_list);
 
-    get_glb_basenames(asset_directory, &asset_list);
+    get_basenames_with_suffix(asset_directory, &asset_list, ".glb");
 }
 
 char *assets_get_name(AssetHandle handle) {

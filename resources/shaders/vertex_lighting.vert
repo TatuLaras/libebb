@@ -1,10 +1,14 @@
 #version 330
+
+#define TERRAIN_MAX_TEXTURES 10
+
 in vec3 vertexPosition;
 in vec2 vertexTexCoord;
 in vec4 vertexColor;
 in vec3 vertexNormal;
 out vec2 fragTexCoord;
 out vec4 fragColor;
+out float texture_selection[10];
 
 uniform mat4 mvp;
 uniform mat4 matModel;
@@ -34,6 +38,13 @@ void main()
 {
     fragTexCoord = vertexTexCoord;
     gl_Position = mvp * vec4(vertexPosition, 1.0);
+
+    for (int i = 0; i < TERRAIN_MAX_TEXTURES; i++) {
+        if (int(vertexColor.y * 255.0 + 0.01) == i)
+            texture_selection[i] = 1.0;
+        else
+            texture_selection[i] = 0.0;
+    }
 
     if (shadingDisabled == 1 || vertexColor.x == 0) {
         fragColor = vec4(1.0);

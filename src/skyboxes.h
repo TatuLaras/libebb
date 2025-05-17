@@ -15,6 +15,5 @@ char *skyboxes_get_name(SkyboxHandle handle);
 // Writes handle of skybox `name` into `out_handle`. Returns 1 if there is no
 // such skybox.
 int skyboxes_get_handle(const char *name, SkyboxHandle *out_handle);
-size_t skyboxes_get_count(void);
 
 #endif

@@ -11,7 +11,6 @@
 // Base entity data
 typedef struct {
     AssetHandle asset_handle;
-    LightingGroupHandle lighting_group_handle;
     ModelHandle model_handle;
     Matrix transform;
     int is_destroyed;

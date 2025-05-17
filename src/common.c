@@ -4,6 +4,7 @@
 #include <raylib.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 uint64_t max(uint64_t a, uint64_t b) {
     if (a > b)
@@ -50,4 +51,13 @@ void strip_filename(char *filepath, size_t n) {
         return;
 
     filepath[last_slash + 1] = 0;
+}
+
+int has_suffix(const char *string, const char *suffix) {
+    size_t string_len = strlen(string);
+    size_t suffix_len = strlen(suffix);
+    if (string_len < suffix_len) {
+        return 0;
+    }
+    return memcmp(string + (string_len - suffix_len), suffix, suffix_len) == 0;
 }

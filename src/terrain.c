@@ -1,6 +1,9 @@
 #include "terrain.h"
 
+#include "lighting.h"
 #include <assert.h>
+#include <math.h>
+#include <raylib.h>
 #include <raymath.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,13 +16,16 @@ void terrain_init(uint32_t width) {
     uint32_t corners = width + 1;
     size_t data_size = corners * corners;
 
-    printf("%u terrain \n", halfway);
     terrain = (Terrain){
         .width = corners,
         .size = data_size,
         .heights = calloc(data_size, sizeof(float)),
+        .texture_indices = calloc(data_size, sizeof(uint8_t)),
         .top_left_world_pos = (Vector2){-(float)halfway, -(float)halfway},
+        .material = LoadMaterialDefault(),
     };
+
+    lighting_scene_add_terrain_material(&terrain.material);
 }
 
 BoundingBox terrain_get_bounds(void) {
@@ -40,27 +46,27 @@ void terrain_set_height(uint32_t x, uint32_t y, float height);
 void terrain_resize(uint32_t width) {
     assert(terrain.heights);
     assert(width > 0);
-    int32_t corners = width + 1;
+    int32_t num_corners = width + 1;
 
     uint32_t old_width = terrain.width;
-    int64_t difference = (int64_t)corners - (int64_t)terrain.width;
+    int64_t difference = (int64_t)num_corners - (int64_t)terrain.width;
     if (difference == 0)
         return;
     difference /= 2;
-    printf("Resize to %u, dif: %ld\n", corners, difference);
-    terrain.width = corners;
-    terrain.size = corners * corners;
 
-    uint32_t halfway = corners / 2;
+    terrain.width = num_corners;
+    terrain.size = num_corners * num_corners;
+
+    uint32_t halfway = num_corners / 2;
     terrain.top_left_world_pos = (Vector2){-(float)halfway, -(float)halfway};
 
     // Allocate new resized buffer and copy height data
     float *new_buffer = malloc(terrain.size * sizeof(float));
     for (size_t i = 0; i < terrain.size; i++) {
-        size_t new_x = i % corners;
-        size_t new_y = i / corners;
-        size_t old_x = new_x - difference;
-        size_t old_y = new_y - difference;
+        size_t new_x = i % num_corners;
+        size_t new_y = i / num_corners;
+        int64_t old_x = new_x - difference;
+        int64_t old_y = new_y - difference;
 
         int inside_old_data = old_x >= 0 && old_x < old_width;
         inside_old_data = inside_old_data && old_y >= 0 && old_y < old_width;
@@ -77,13 +83,16 @@ void terrain_resize(uint32_t width) {
     terrain.heights = new_buffer;
 }
 
-static inline Vector3 datapoint_position(size_t i) {
+// Returns world space coordinates of data point `i` in terrain data, component
+// w is used for texture index.
+static inline Vector4 datapoint_position(size_t i) {
     uint32_t x = i % terrain.width;
     uint32_t y = i / terrain.width;
-    return (Vector3){
+    return (Vector4){
         terrain.top_left_world_pos.x + (float)x * TERRAIN_GRID_DENSITY,
         terrain.heights[i],
         terrain.top_left_world_pos.y + (float)y * TERRAIN_GRID_DENSITY,
+        terrain.texture_indices[i],
     };
 }
 
@@ -95,6 +104,8 @@ Mesh terrain_generate_mesh(void) {
     mesh.triangleCount = cell_count * 2;
     mesh.vertexCount = mesh.triangleCount * 3;
     mesh.vertices = malloc(mesh.vertexCount * 3 * sizeof(float));
+    mesh.colors = malloc(mesh.vertexCount * 4 * sizeof(float));
+    memset(mesh.colors, 0xff, mesh.vertexCount * 4 * sizeof(float));
     mesh.texcoords = malloc(mesh.vertexCount * 2 * sizeof(float));
     mesh.normals = malloc(mesh.vertexCount * 3 * sizeof(float));
 
@@ -116,7 +127,7 @@ Mesh terrain_generate_mesh(void) {
         else
             start_corner = 3 - (x % 2);
 
-        Vector3 corners[4] = {
+        Vector4 corners[4] = {
             datapoint_position(i),
             datapoint_position(i + terrain.width),
             datapoint_position(i + terrain.width + 1),
@@ -134,6 +145,7 @@ Mesh terrain_generate_mesh(void) {
             size_t triangle_i = quad_i + tri * 9;
             for (uint8_t vert = 0; vert < 3; vert++) {
                 uint8_t corner = (start_corner + vert + tri * 2) % 4;
+
                 mesh.vertices[triangle_i + vert * 3 + 0] = corners[corner].x;
                 mesh.vertices[triangle_i + vert * 3 + 1] = corners[corner].y;
                 mesh.vertices[triangle_i + vert * 3 + 2] = corners[corner].z;
@@ -142,6 +154,11 @@ Mesh terrain_generate_mesh(void) {
                     corner_uvs[corner].x * 0.5 + (x % 2) * 0.5;
                 mesh.texcoords[quad * 12 + tri * 6 + vert * 2 + 1] =
                     corner_uvs[corner].y * 0.5 + (y % 2) * 0.5;
+
+                // Textures
+
+                mesh.colors[quad * 24 + tri * 12 + vert * 4 + 1] =
+                    (uint8_t)(corners[corner].w) % 10;
             }
 
             // Normal vector
@@ -163,4 +180,20 @@ Mesh terrain_generate_mesh(void) {
     UploadMesh(&mesh, false);
 
     return mesh;
+}
+
+void terrain_free(void) {
+    if (terrain.heights)
+        free(terrain.heights);
+    terrain.heights = 0;
+}
+
+void terrain_bind_texture(uint8_t slot, Texture texture) {
+    if (slot >= TERRAIN_MAX_TEXTURES)
+        return;
+
+    terrain.material.shader.locs[SHADER_LOC_MAP_ALBEDO + slot] =
+        GetShaderLocation(terrain.material.shader,
+                          TextFormat("textures[%i]", slot));
+    terrain.material.maps[MATERIAL_MAP_ALBEDO + slot].texture = texture;
 }
