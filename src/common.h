@@ -15,16 +15,16 @@ uint64_t min(uint64_t a, uint64_t b);
 float maxf(float a, float b);
 float minf(float a, float b);
 
-// Quantize `value` to `interval`.
+// Rounds `value` to `interval`.
 float quantize(float value, float interval);
-// Gets a position from a `transform` matrix.
+// Gets the position from the `transform` matrix.
 Vector3 matrix_get_position(Matrix transform);
 
 // Adds a null-terminator after the location of the last '/' in `filepath`, with
 // `n` as a max limit for iteration.
 void strip_filename(char *filepath, size_t n);
 
-// Returns 1 if `string` has suffix `suffix`.
+// Returns 1 if `string` ends with `suffix`.
 int has_suffix(const char *string, const char *suffix);
 
 #endif

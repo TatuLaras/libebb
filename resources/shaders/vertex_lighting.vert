@@ -1,6 +1,6 @@
 #version 330
 
-#define TERRAIN_MAX_TEXTURES 10
+#define TERRAIN_MAX_TEXTURES 7
 
 in vec3 vertexPosition;
 in vec2 vertexTexCoord;
