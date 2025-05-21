@@ -3,7 +3,6 @@
 #include "lighting.h"
 #include "raycast.h"
 #include <assert.h>
-#include <math.h>
 #include <raylib.h>
 #include <raymath.h>
 #include <stdio.h>
@@ -62,7 +61,8 @@ void terrain_resize(uint32_t width) {
     terrain.top_left_world_pos = (Vector2){-(float)halfway, -(float)halfway};
 
     // Allocate new resized buffer and copy height data
-    float *new_buffer = malloc(terrain.size * sizeof(float));
+    float *new_heights = malloc(terrain.size * sizeof(float));
+    uint8_t *new_texture_indices = malloc(terrain.size);
     for (size_t i = 0; i < terrain.size; i++) {
         size_t new_x = i % num_corners;
         size_t new_y = i / num_corners;
@@ -73,20 +73,27 @@ void terrain_resize(uint32_t width) {
         inside_old_data = inside_old_data && old_y >= 0 && old_y < old_width;
 
         if (!inside_old_data) {
-            new_buffer[i] = 0;
+            new_heights[i] = 0;
+            new_texture_indices[i] = 0;
             continue;
         }
 
-        new_buffer[i] = terrain.heights[old_y * old_width + old_x];
+        new_heights[i] = terrain.heights[old_y * old_width + old_x];
+        new_texture_indices[i] =
+            terrain.texture_indices[old_y * old_width + old_x];
     }
 
     free(terrain.heights);
-    terrain.heights = new_buffer;
+    free(terrain.texture_indices);
+    terrain.heights = new_heights;
+    terrain.texture_indices = new_texture_indices;
 }
 
 // Returns world space coordinates of data point `i` in terrain data, component
 // w is used for texture index.
 static inline Vector4 datapoint_position(size_t i) {
+    assert(i <= terrain.size);
+
     uint32_t x = i % terrain.width;
     uint32_t y = i / terrain.width;
     return (Vector4){
@@ -97,10 +104,10 @@ static inline Vector4 datapoint_position(size_t i) {
     };
 }
 
-Mesh *terrain_get_mesh(void) {
+void terrain_draw(void) {
     if (!terrain.mesh.vaoId)
-        return 0;
-    return &terrain.mesh;
+        return;
+    DrawMesh(terrain.mesh, terrain.material, MatrixTranslate(0, -0.02, 0));
 }
 
 void terrain_generate_mesh(void) {
@@ -205,9 +212,12 @@ void terrain_generate_mesh(void) {
 void terrain_free(void) {
     if (terrain.heights)
         free(terrain.heights);
+    if (terrain.texture_indices)
+        free(terrain.texture_indices);
     if (terrain.mesh.vaoId)
         UnloadMesh(terrain.mesh);
     terrain.heights = 0;
+    terrain.texture_indices = 0;
     terrain.mesh = (Mesh){0};
 }
 

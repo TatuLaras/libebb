@@ -38,6 +38,19 @@ Vector3 matrix_get_position(Matrix transform) {
     return (Vector3){transform.m12, transform.m13, transform.m14};
 }
 
+void matrix_set_position(Matrix *transform, Vector3 position) {
+    transform->m12 = position.x;
+    transform->m13 = position.y;
+    transform->m14 = position.z;
+}
+
+Matrix matrix_strip_position(Matrix transform) {
+    transform.m12 = 0;
+    transform.m13 = 0;
+    transform.m14 = 0;
+    return transform;
+}
+
 void strip_filename(char *filepath, size_t n) {
     size_t last_slash = 0;
     size_t length = 0;

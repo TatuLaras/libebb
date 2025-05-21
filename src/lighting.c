@@ -15,7 +15,7 @@
 #define STARTING_SIZE 4
 #define GROWTH_FACTOR 2
 
-LightingScene lighting_scene = {0};
+static LightingScene lighting_scene = {0};
 
 static inline LightingShader shader_init(char *vertex, char *fragment) {
     LightingShader lighting_shader = {0};
@@ -77,8 +77,6 @@ int lighting_scene_add_light(LightSource light,
     if (lighting_scene.lights_size >= LIGHTING_MAX_LIGHTS)
         return 1;
 
-    uint32_t i = lighting_scene.lights_size;
-
     // Connect shader locations
 
     if (out_light_source_handle)
@@ -86,7 +84,7 @@ int lighting_scene_add_light(LightSource light,
 
     lighting_scene.lights[lighting_scene.lights_size++] = light;
 
-    update_shader_data();
+    lighting_shader_data_update();
 
     return 0;
 }
@@ -113,7 +111,7 @@ LightSource *lighting_scene_get_light(LightSourceHandle light_handle) {
 
 void lighting_scene_set_enabled(uint32_t enabled) {
     lighting_scene.is_shading_disabled = !enabled;
-    update_shader_data();
+    lighting_shader_data_update();
 }
 
 static inline int
@@ -183,14 +181,22 @@ static inline void lighting_shader_update(LightingShader *lighting_shader) {
     }
 }
 
-void update_shader_data(void) {
+void lighting_shader_data_update(void) {
     lighting_shader_update(&lighting_scene.base_shader);
     lighting_shader_update(&lighting_scene.terrain_shader);
 }
 
-void light_source_update(LightSourceHandle light_handle, Vector3 offset) {
+void lighting_light_update(LightSourceHandle light_handle, Vector3 offset) {
     lighting_shader_update_light_source(&lighting_scene.base_shader,
                                         light_handle, offset);
     lighting_shader_update_light_source(&lighting_scene.terrain_shader,
                                         light_handle, offset);
+}
+
+void lighting_scene_set_ambient_color(Color color) {
+    lighting_scene.ambient_color = color;
+}
+
+Color lighting_scene_get_ambient_color(void) {
+    return lighting_scene.ambient_color;
 }

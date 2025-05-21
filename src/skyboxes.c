@@ -1,10 +1,8 @@
 #include "skyboxes.h"
 
 #include "filesystem.h"
-#include "string_vector.h"
 #include <assert.h>
 #include <dirent.h>
-#include <stddef.h>
 #include <stdint.h>
 
 StringVector skybox_list = {0};

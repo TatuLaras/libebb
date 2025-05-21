@@ -14,7 +14,7 @@
 #define ENTITIES_STARTING_SIZE 4
 #define ENTITIES_GROWTH_FACTOR 2
 
-Scene scene = {0};
+static Scene scene = {0};
 static Model skybox_model = {0};
 
 // Loads a model of asset name `asset_name` from the asset directory (see
@@ -150,6 +150,10 @@ void scene_load_skybox(const char *skybox_directory) {
 void scene_set_skybox(SkyboxHandle handle, const char *skybox_directory) {
     scene.skybox_handle = handle;
     scene_load_skybox(skybox_directory);
+}
+
+SkyboxHandle scene_get_skybox(void) {
+    return scene.skybox_handle;
 }
 
 void scene_render_skybox(Camera3D camera) {

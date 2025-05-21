@@ -19,6 +19,7 @@ Scene file structure:
 
 #include "common.h"
 #include "lighting.h"
+#include "terrain.h"
 #include <raylib.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -48,6 +49,10 @@ typedef struct {
 
     uint32_t skybox_count;
     uint16_t skybox_size;
+
+    uint16_t terrain_info_size;
+    uint32_t terrain_heights_size;
+    uint32_t terrain_texture_indices_size;
 } SceneFileHeader;
 
 typedef struct {
@@ -80,6 +85,12 @@ typedef struct {
 typedef struct {
     char name[NAME_MAX_LENGTH];
 } SceneFileSkybox;
+
+typedef struct {
+    Vector2 top_left_world_pos;
+    uint32_t width;
+    char texture_names[TERRAIN_MAX_TEXTURES][NAME_MAX_LENGTH];
+} SceneFileTerrainInfo;
 
 // Stores the current scene into a file.
 void scene_file_store(FILE *fp);

@@ -57,8 +57,6 @@ typedef struct {
 
 } LightingScene;
 
-extern LightingScene lighting_scene;
-
 // Initializes a lighting scene.
 void lighting_scene_init(Color ambient_color);
 // Adds a `light` source to the lighting scene. Handle of the added light source
@@ -78,8 +76,11 @@ void lighting_scene_set_enabled(uint32_t enabled);
 LightSource *lighting_scene_get_light(LightSourceHandle light_handle);
 
 // Updates shader light calculation data for the whole scene.
-void update_shader_data(void);
+void lighting_shader_data_update(void);
 // Updates shader light calculation data for a light source.
-void light_source_update(LightSourceHandle light_handle, Vector3 offset);
+void lighting_light_update(LightSourceHandle light_handle, Vector3 offset);
+
+void lighting_scene_set_ambient_color(Color color);
+Color lighting_scene_get_ambient_color(void);
 
 #endif

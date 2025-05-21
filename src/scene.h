@@ -25,8 +25,6 @@ typedef struct {
     SkyboxHandle skybox_handle;
 } Scene;
 
-extern Scene scene;
-
 void scene_init(void);
 void scene_free(void);
 
@@ -45,8 +43,9 @@ ModelData *scene_entity_get_model(Entity *entity);
 void scene_load_skybox(const char *skybox_directory);
 // Renders the current skybox as scene background.
 void scene_render_skybox(Camera3D camera);
-// Sets the current skybox
+
 void scene_set_skybox(SkyboxHandle handle, const char *skybox_directory);
+SkyboxHandle scene_get_skybox(void);
 
 void scene_render_properties_menu(void);
 

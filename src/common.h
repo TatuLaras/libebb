@@ -17,8 +17,13 @@ float minf(float a, float b);
 
 // Rounds `value` to `interval`.
 float quantize(float value, float interval);
+
 // Gets the position from the `transform` matrix.
 Vector3 matrix_get_position(Matrix transform);
+// Returns `transform` matrix without any translation, only rotation and scale.
+Matrix matrix_strip_position(Matrix transform);
+// Sets the position part of `transform` matrix.
+void matrix_set_position(Matrix *transform, Vector3 position);
 
 // Adds a null-terminator after the location of the last '/' in `filepath`, with
 // `n` as a max limit for iteration.

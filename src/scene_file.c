@@ -7,6 +7,8 @@
 #include "lighting.h"
 #include "scene.h"
 #include "skyboxes.h"
+#include "terrain.h"
+#include "terrain_textures.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -39,7 +41,7 @@ serialize_lighting_data_into_buf(GeneralBuffer *buf,
                                  size_t *out_light_source_table_entries) {
     // Lighting scene
     SceneFileLightingScene file_lighting_scene = {
-        .ambient_color = lighting_scene.ambient_color};
+        .ambient_color = lighting_scene_get_ambient_color()};
     genbuf_append(buf, &file_lighting_scene, sizeof(SceneFileLightingScene));
 
     // Light sources
@@ -95,13 +97,41 @@ serialize_entity_data_into_buf(GeneralBuffer *buf,
 static inline void
 serialize_skybox_data_into_buf(GeneralBuffer *buf,
                                size_t *out_skybox_entry_count) {
-    char *skybox_name = skyboxes_get_name(scene.skybox_handle);
+    char *skybox_name = skyboxes_get_name(scene_get_skybox());
     SceneFileSkybox skybox = {0};
     strncpy(skybox.name, skybox_name, ARRAY_LENGTH(skybox.name) - 1);
     genbuf_append(buf, &skybox, (sizeof skybox));
 
     if (out_skybox_entry_count)
         *out_skybox_entry_count = 1;
+}
+
+static inline void serialize_terrain_data_into_buf(GeneralBuffer *buf,
+                                                   size_t *out_heights_size,
+                                                   size_t *out_indices_size) {
+    SceneFileTerrainInfo terrain_info = {
+        .top_left_world_pos = terrain.top_left_world_pos,
+        .width = terrain.width,
+    };
+
+    // Texture names
+    for (size_t i = 0; i < TERRAIN_MAX_TEXTURES; i++) {
+        TerrainTextureHandle handle = terrain_textures_get_slot_handle(i);
+        char *texture_name = terrain_textures_get_name(handle);
+        if (!texture_name)
+            continue;
+        strncpy((char *)(terrain_info.texture_names + i), texture_name,
+                NAME_MAX_LENGTH - 1);
+    }
+
+    genbuf_append(buf, &terrain_info, (sizeof terrain_info));
+    genbuf_append(buf, terrain.heights, terrain.size * sizeof(float));
+    genbuf_append(buf, terrain.texture_indices, terrain.size);
+
+    if (out_heights_size)
+        *out_heights_size = terrain.size * sizeof(float);
+    if (out_indices_size)
+        *out_indices_size = terrain.size;
 }
 
 void scene_file_store(FILE *fp) {
@@ -121,6 +151,10 @@ void scene_file_store(FILE *fp) {
     size_t skybox_entry_count = 0;
     serialize_skybox_data_into_buf(&content, &skybox_entry_count);
 
+    size_t heights_size = 0;
+    size_t indices_size = 0;
+    serialize_terrain_data_into_buf(&content, &heights_size, &indices_size);
+
     SceneFileHeader header = {
         .magic = SCENE_FILE_MAGIC,
 
@@ -135,6 +169,9 @@ void scene_file_store(FILE *fp) {
         .light_source_size = sizeof(SceneFileLightSource),
         .entity_size = sizeof(SceneFileEntity),
         .skybox_size = sizeof(SceneFileSkybox),
+        .terrain_info_size = sizeof(SceneFileTerrainInfo),
+        .terrain_heights_size = heights_size,
+        .terrain_texture_indices_size = indices_size,
     };
 
     fwrite(&header, (sizeof header), 1, fp);
@@ -142,6 +179,7 @@ void scene_file_store(FILE *fp) {
     genbuf_free(&content);
 }
 
+//  TODO: chop up
 int scene_file_load(FILE *fp, const char *skybox_directory,
                     const char *asset_directory) {
     printf("INFO: loading scene file.\n");
@@ -180,7 +218,8 @@ int scene_file_load(FILE *fp, const char *skybox_directory,
         header.header_size + header.asset_size * header.asset_count +
         header.lighting_scene_size +
         header.light_source_size * header.light_source_count +
-        header.entity_size * header.entity_count +
+        header.entity_size * header.entity_count + header.terrain_info_size +
+        header.terrain_heights_size + header.terrain_texture_indices_size +
         header.skybox_size * header.skybox_count;
 
     if (file_size != assumed_file_size) {
@@ -194,7 +233,7 @@ int scene_file_load(FILE *fp, const char *skybox_directory,
 
     SceneFileLightingScene file_lighting_scene = {0};
     memcpy(&file_lighting_scene, offset, header.lighting_scene_size);
-    lighting_scene.ambient_color = file_lighting_scene.ambient_color;
+    lighting_scene_set_ambient_color(file_lighting_scene.ambient_color);
 
     offset += header.lighting_scene_size;
 
@@ -234,18 +273,18 @@ int scene_file_load(FILE *fp, const char *skybox_directory,
         }
 
         EntityHandle entity_handle = 0;
-        scene_add(
-            (Entity){
-                .asset_handle = asset_handle,
-                .transform = entity.transform,
-                .ignore_raycast = entity.ignore_raycast,
-            },
-            &entity_handle, asset_directory);
-
-        lighting_scene_add_entity(scene_get_entity(entity_handle));
+        if (scene_add(
+                (Entity){
+                    .asset_handle = asset_handle,
+                    .transform = entity.transform,
+                    .ignore_raycast = entity.ignore_raycast,
+                },
+                &entity_handle, asset_directory))
+            return 1;
 
         Entity *added_entity = scene_get_entity(entity_handle);
         assert(added_entity);
+        lighting_scene_add_entity(added_entity);
     }
 
     offset += header.entity_size * header.entity_count;
@@ -260,6 +299,41 @@ int scene_file_load(FILE *fp, const char *skybox_directory,
         } else
             fprintf(stderr, "WARNING: Skybox %s no longer exists.\n",
                     skybox.name);
+    }
+
+    offset += header.skybox_size * header.skybox_count;
+
+    SceneFileTerrainInfo terrain_info = {0};
+    memcpy(&terrain_info, offset, header.terrain_info_size);
+    offset += header.terrain_info_size;
+
+    if (terrain_info.width * terrain_info.width !=
+            header.terrain_heights_size / sizeof(float) ||
+        terrain_info.width * terrain_info.width !=
+            header.terrain_texture_indices_size)
+        return 1;
+
+    if (terrain_info.width == 0)
+        return 0;
+
+    terrain_resize(terrain_info.width - 1);
+
+    memcpy(terrain.heights, offset, header.terrain_heights_size);
+    offset += header.terrain_heights_size;
+    memcpy(terrain.texture_indices, offset,
+           header.terrain_texture_indices_size);
+    offset += header.terrain_texture_indices_size;
+
+    // Terrain textures
+    for (size_t i = 0; i < TERRAIN_MAX_TEXTURES; i++) {
+        TerrainTextureHandle texture_handle = 0;
+        if (terrain_textures_get_handle(terrain_info.texture_names[i],
+                                        &texture_handle)) {
+            printf("WARNING: terrain texture %s no longer exists\n",
+                   terrain_info.texture_names[i]);
+            continue;
+        }
+        terrain_textures_load_into_slot(texture_handle, i, 0);
     }
 
     free(file_buffer);

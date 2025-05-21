@@ -27,4 +27,17 @@ int terrain_textures_get_handle(const char *name,
 void terrain_textures_load_shader_texture(Shader *terrain_shader, uint8_t slot,
                                           const char *texture_filepath);
 
+// Loads a texture by `handle` and assigns it to terrain texture slot `slot`.
+//
+// If `terrain_texture_directory` is NULL only assignment into slot will be
+// performed without loading the texture into GPU memory from file.
+void terrain_textures_load_into_slot(TerrainTextureHandle handle, uint8_t slot,
+                                     const char *terrain_texture_directory);
+// Loads textures in all slots into GPU memory from file in
+// `terrain_texture_directory`.
+void terrain_textures_load_all_selected(const char *terrain_texture_directory);
+
+// Returns terrain texture handle in terrain texture slot `slot`.
+TerrainTextureHandle terrain_textures_get_slot_handle(uint8_t slot);
+
 #endif

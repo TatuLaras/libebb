@@ -41,7 +41,10 @@ void terrain_resize(uint32_t width);
 // Generates a GPU mesh from terrain height data.
 void terrain_generate_mesh(void);
 
-Mesh *terrain_get_mesh(void);
+// Draws terrain mesh.
+//
+// NOTE: Generate terrain mesh with function terrain_generate_mesh.
+void terrain_draw(void);
 
 // Loads texture into a shader location to be used for texture painting with
 // asset slot `slot`.
