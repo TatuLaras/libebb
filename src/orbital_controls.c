@@ -47,7 +47,7 @@ void orbital_camera_update(Camera *camera, int zoom_with_mouse_horizontal) {
     if (IsKeyDown(KEY_LEFT_CONTROL)) {
         float delta = mouse_delta.x;
         if (zoom_with_mouse_horizontal)
-            delta = -mouse_delta.y;
+            delta = mouse_delta.y;
 
         orbital_adjust_camera_zoom(camera,
                                    delta * DRAG_ZOOM_SENSITIVITY_MULTIPLIER);
