@@ -21,7 +21,7 @@ void orbital_adjust_camera_zoom(Camera *camera, float amount) {
         Vector3Add(camera->position, Vector3Scale(local_z_axis, amount));
 }
 
-void orbital_camera_update(Camera *camera) {
+void orbital_camera_update(Camera *camera, int zoom_with_mouse_horizontal) {
     Vector2 mouse_delta = GetMouseDelta();
     Vector3 target_to_pos = Vector3Subtract(camera->position, camera->target);
     Vector3 local_z_axis = Vector3Normalize(Vector3Scale(target_to_pos, -1));
@@ -45,8 +45,12 @@ void orbital_camera_update(Camera *camera) {
     }
 
     if (IsKeyDown(KEY_LEFT_CONTROL)) {
-        orbital_adjust_camera_zoom(
-            camera, mouse_delta.x * DRAG_ZOOM_SENSITIVITY_MULTIPLIER);
+        float delta = mouse_delta.x;
+        if (zoom_with_mouse_horizontal)
+            delta = mouse_delta.y;
+
+        orbital_adjust_camera_zoom(camera,
+                                   delta * DRAG_ZOOM_SENSITIVITY_MULTIPLIER);
         return;
     }
 

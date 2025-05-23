@@ -13,7 +13,7 @@
 // Shift to shift camera position
 //
 // Control to move camera closer or further
-void orbital_camera_update(Camera *camera);
+void orbital_camera_update(Camera *camera, int zoom_with_mouse_horizontal);
 // Moves camera closer to its target by `amount`.
 void orbital_adjust_camera_zoom(Camera *camera, float amount);
 
