@@ -17,9 +17,10 @@
 
 static LightingScene lighting_scene = {0};
 
-static inline LightingShader shader_init(char *vertex, char *fragment) {
+static inline LightingShader shader_init(const char *vertex,
+                                         const char *fragment) {
     LightingShader lighting_shader = {0};
-    lighting_shader.shader = LoadShader(vertex, fragment);
+    lighting_shader.shader = LoadShaderFromMemory(vertex, fragment);
 
     lighting_shader.ambient_color_location =
         GetShaderLocation(lighting_shader.shader, "ambient");
@@ -53,21 +54,13 @@ static inline LightingShader shader_init(char *vertex, char *fragment) {
     return lighting_shader;
 }
 
-void lighting_scene_init(Color ambient_color) {
+void lighting_scene_init(Color ambient_color, const char *vert_shader,
+                         const char *terrain_frag_shader) {
     lighting_scene.ambient_color = ambient_color;
 
-    //  TODO: Just give these as parameters
-    char shader_path[MAX_PATH_LENGTH + 1] = __FILE__;
-    strip_filename(shader_path, MAX_PATH_LENGTH);
-    strcat(shader_path, "../resources/shaders/vertex_lighting.vert");
-
-    char terrain_shader_path[MAX_PATH_LENGTH + 1] = __FILE__;
-    strip_filename(terrain_shader_path, MAX_PATH_LENGTH);
-    strcat(terrain_shader_path, "../resources/shaders/terrain.frag");
-
-    lighting_scene.base_shader = shader_init(shader_path, 0);
+    lighting_scene.base_shader = shader_init(vert_shader, 0);
     lighting_scene.terrain_shader =
-        shader_init(shader_path, terrain_shader_path);
+        shader_init(vert_shader, terrain_frag_shader);
 
     return;
 }
