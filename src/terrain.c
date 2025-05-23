@@ -227,7 +227,7 @@ void terrain_bind_texture(uint8_t slot, Texture texture) {
 
     terrain.material.shader.locs[SHADER_LOC_MAP_ALBEDO + slot] =
         GetShaderLocation(terrain.material.shader,
-                          TextFormat("textures[%i]", slot));
+                          TextFormat("texture%i", slot));
     terrain.material.maps[MATERIAL_MAP_ALBEDO + slot].texture = texture;
 }
 
