@@ -55,10 +55,11 @@ static inline LightingShader shader_init(const char *vertex,
 }
 
 void lighting_scene_init(Color ambient_color, const char *vert_shader,
-                         const char *terrain_frag_shader) {
+                         const char *terrain_frag_shader,
+                         const char *entity_frag_shader) {
     lighting_scene.ambient_color = ambient_color;
 
-    lighting_scene.base_shader = shader_init(vert_shader, 0);
+    lighting_scene.base_shader = shader_init(vert_shader, entity_frag_shader);
     lighting_scene.terrain_shader =
         shader_init(vert_shader, terrain_frag_shader);
 

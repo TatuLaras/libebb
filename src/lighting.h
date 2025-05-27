@@ -59,7 +59,8 @@ typedef struct {
 
 // Initializes a lighting scene.
 void lighting_scene_init(Color ambient_color, const char *vert_shader,
-                         const char *terrain_frag_shader);
+                         const char *terrain_frag_shader,
+                         const char *entity_frag_shader);
 // Adds a `light` source to the lighting scene. Handle of the added light source
 // will be written to `out_light_source_handle`.
 int lighting_scene_add_light(LightSource light,

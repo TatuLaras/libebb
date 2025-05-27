@@ -3,6 +3,12 @@
 
 #include "raylib.h"
 
-Image *aseprite_load_as_image(const char *filepath);
+typedef struct {
+    Image base_image;
+    Image unlit_data;
+} ImageData;
+
+ImageData aseprite_load(const char *filepath);
+void aseprite_image_data_free(ImageData *image_data);
 
 #endif

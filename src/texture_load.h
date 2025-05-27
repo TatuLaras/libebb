@@ -1,13 +1,13 @@
-#ifndef _MODEL_FILES
-#define _MODEL_FILES
+#ifndef _TEXTURE_LOAD
+#define _TEXTURE_LOAD
 
 #include <raylib.h>
 #include <stdint.h>
 
 // Loads an aseprite file corresponding to the model file `filepath` as a
 // texture to `model` if one exists.
-void try_load_corresponding_texture(const char *filepath, Model *model);
+void texture_load_model_aseprite_texture(const char *filepath, Model *model);
 // Load .aseprite file as a GPU texture.
-Texture load_aseprite_texture(const char *filepath);
+Texture texture_load_aseprite_texture(const char *filepath);
 
 #endif

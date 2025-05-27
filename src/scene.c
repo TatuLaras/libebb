@@ -3,8 +3,8 @@
 #include "assets.h"
 #include "common.h"
 #include "handles.h"
-#include "model_files.h"
 #include "skyboxes.h"
+#include "texture_load.h"
 #include <assert.h>
 #include <raylib.h>
 #include <stdio.h>
@@ -33,7 +33,7 @@ static inline Model load_asset_model(AssetHandle handle,
     Model model = LoadModel(filepath);
     if (!model.meshCount)
         return (Model){0};
-    try_load_corresponding_texture(filepath, &model);
+    texture_load_model_aseprite_texture(filepath, &model);
     return model;
 }
 
@@ -141,7 +141,7 @@ void scene_load_skybox(const char *skybox_directory) {
     strcat(path, skybox_name);
     strcat(path, ".aseprite");
 
-    Texture skybox_texture = load_aseprite_texture(path);
+    Texture skybox_texture = texture_load_aseprite_texture(path);
     if (skybox_texture.id)
         skybox_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture =
             skybox_texture;

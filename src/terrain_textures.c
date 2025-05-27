@@ -2,9 +2,9 @@
 
 #include "common.h"
 #include "filesystem.h"
-#include "model_files.h"
 #include "string_vector.h"
 #include "terrain.h"
+#include "texture_load.h"
 #include <assert.h>
 #include <dirent.h>
 #include <raylib.h>
@@ -51,7 +51,7 @@ void terrain_textures_load_into_slot(TerrainTextureHandle handle, uint8_t slot,
     strcat(path, texture_name);
     strcat(path, ".aseprite");
 
-    Texture texture = load_aseprite_texture(path);
+    Texture texture = texture_load_aseprite_texture(path);
     terrain_bind_texture(slot, texture);
 }
 
@@ -64,7 +64,7 @@ void terrain_textures_load_all_selected(const char *terrain_texture_directory) {
         strcpy(path, terrain_texture_directory);
         strcat(path, texture_name);
         strcat(path, ".aseprite");
-        Texture texture = load_aseprite_texture(path);
+        Texture texture = texture_load_aseprite_texture(path);
         terrain_bind_texture(i, texture);
     }
 }
