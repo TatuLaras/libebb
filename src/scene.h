@@ -38,7 +38,7 @@ void scene_remove(EntityHandle handle);
 // exists.
 Entity *scene_get_entity(EntityHandle handle);
 // Gets the model of an entity.
-ModelData *scene_entity_get_model(Entity *entity);
+Model *scene_entity_get_model(Entity *entity);
 
 // Initializes the skybox, call this before any other skybox functions.
 void scene_skybox_init(const char *skybox_model_path);

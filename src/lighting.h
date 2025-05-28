@@ -53,7 +53,6 @@ typedef struct {
     LightingShader base_shader;
     LightingShader terrain_shader;
     Color ambient_color;
-
 } LightingScene;
 
 // Initializes a lighting scene.

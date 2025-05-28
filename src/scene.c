@@ -71,7 +71,7 @@ int scene_add(Entity entity, EntityHandle *out_entity_handle,
 
         if (!strcmp(asset_name, scene_entity_asset_name)) {
             // Needs to not be a private instance of a model
-            ModelData *model_data =
+            Model *model_data =
                 modelvec_get(&scene.models, scene_entity->model_handle);
             assert(model_data);
 
@@ -83,12 +83,11 @@ int scene_add(Entity entity, EntityHandle *out_entity_handle,
 
     // If not, load model
     if (!match_found) {
-        ModelData model_data = {
-            .model = load_asset_model(entity.asset_handle, asset_directory)};
-        if (!model_data.model.meshCount)
+        Model model = load_asset_model(entity.asset_handle, asset_directory);
+        if (!model.meshCount)
             return 1;
 
-        entity.model_handle = modelvec_append(&scene.models, model_data);
+        entity.model_handle = modelvec_append(&scene.models, model);
     }
 
     scene.entities[scene.entities_used++] = entity;
@@ -112,16 +111,16 @@ Entity *scene_get_entity(EntityHandle handle) {
 
 void scene_free(void) {
     size_t i = 0;
-    ModelData *model_data = 0;
-    while ((model_data = modelvec_get(&scene.models, i++)))
-        UnloadModel(model_data->model);
+    Model *model = 0;
+    while ((model = modelvec_get(&scene.models, i++)))
+        UnloadModel(*model);
 
     modelvec_free(&scene.models);
     if (scene.entities)
         free(scene.entities);
 }
 
-ModelData *scene_entity_get_model(Entity *entity) {
+Model *scene_entity_get_model(Entity *entity) {
     return modelvec_get(&scene.models, entity->model_handle);
 }
 

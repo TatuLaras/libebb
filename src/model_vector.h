@@ -4,10 +4,6 @@
 #include "vec.h"
 #include <raylib.h>
 
-typedef struct {
-    Model model;
-} ModelData;
-
-VEC_DECLARE(ModelData, ModelVector, modelvec)
+VEC_DECLARE(Model, ModelVector, modelvec)
 
 #endif

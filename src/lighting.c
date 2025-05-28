@@ -1,7 +1,6 @@
 #include "lighting.h"
 
 #include "handles.h"
-#include "model_vector.h"
 #include "scene.h"
 #include <assert.h>
 #include <raylib.h>
@@ -88,9 +87,9 @@ void lighting_scene_add_terrain_material(Material *material) {
 }
 
 void lighting_scene_add_entity(Entity *entity) {
-    ModelData *model_data = scene_entity_get_model(entity);
-    assert(model_data->model.meshCount);
-    lighting_scene_add_material(&model_data->model.materials[0]);
+    Model *model = scene_entity_get_model(entity);
+    assert(model->meshCount);
+    lighting_scene_add_material(&model->materials[0]);
 }
 
 LightSource *lighting_scene_get_light(LightSourceHandle light_handle) {

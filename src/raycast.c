@@ -16,10 +16,10 @@ ObjectRaycastResult raycast_scene_objects(Ray ray) {
         if (entity->is_destroyed)
             continue;
 
-        ModelData *model_data = scene_entity_get_model(entity);
+        Model *model = scene_entity_get_model(entity);
 
-        collision = GetRayCollisionMesh(ray, model_data->model.meshes[0],
-                                        entity->transform);
+        collision =
+            GetRayCollisionMesh(ray, model->meshes[0], entity->transform);
 
         if (collision.hit && !entity->ignore_raycast) {
             int is_closer_than_previous =
