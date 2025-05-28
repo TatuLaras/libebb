@@ -9,7 +9,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define LIGHTING_MAX_LIGHTS 16
+#define LIGHTING_MAX_LIGHTS 64
 
 typedef enum {
     LIGHT_NULL,
@@ -26,7 +26,6 @@ typedef struct {
     Vector3 position;
     Vector3 target;
     Color color;
-
 } LightSource;
 
 typedef struct {

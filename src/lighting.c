@@ -1,6 +1,5 @@
 #include "lighting.h"
 
-#include "common.h"
 #include "handles.h"
 #include "model_vector.h"
 #include "scene.h"
@@ -11,9 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define STARTING_SIZE 4
-#define GROWTH_FACTOR 2
 
 static LightingScene lighting_scene = {0};
 
