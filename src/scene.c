@@ -125,13 +125,12 @@ ModelData *scene_entity_get_model(Entity *entity) {
     return modelvec_get(&scene.models, entity->model_handle);
 }
 
-void scene_load_skybox(const char *skybox_directory) {
-    if (!skybox_model.meshCount) {
-        char skybox_model_path[MAX_PATH_LENGTH + 1] = __FILE__;
-        strip_filename(skybox_model_path, MAX_PATH_LENGTH);
-        strcat(skybox_model_path, "../resources/skybox.obj");
-        skybox_model = LoadModel(skybox_model_path);
-    }
+void scene_skybox_init(const char *skybox_model_path) {
+    skybox_model = LoadModel(skybox_model_path);
+}
+
+void scene_load_selected_skybox(const char *skybox_directory) {
+    assert(skybox_model.meshCount);
 
     char *skybox_name = skyboxes_get_name(scene.skybox_handle);
     assert(skybox_name);
@@ -149,7 +148,7 @@ void scene_load_skybox(const char *skybox_directory) {
 
 void scene_set_skybox(SkyboxHandle handle, const char *skybox_directory) {
     scene.skybox_handle = handle;
-    scene_load_skybox(skybox_directory);
+    scene_load_selected_skybox(skybox_directory);
 }
 
 SkyboxHandle scene_get_skybox(void) {

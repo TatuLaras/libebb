@@ -39,8 +39,11 @@ void scene_remove(EntityHandle handle);
 Entity *scene_get_entity(EntityHandle handle);
 // Gets the model of an entity.
 ModelData *scene_entity_get_model(Entity *entity);
+
+// Initializes the skybox, call this before any other skybox functions.
+void scene_skybox_init(const char *skybox_model_path);
 // Loads the currently set skybox as scene background.
-void scene_load_skybox(const char *skybox_directory);
+void scene_load_selected_skybox(const char *skybox_directory);
 // Renders the current skybox as scene background.
 void scene_render_skybox(Camera3D camera);
 
