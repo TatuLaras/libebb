@@ -26,6 +26,7 @@ VEC_DECLARE(EntityHandle, EntityHandleVector, entityhandlevec)
 // module.
 void entities_init(void);
 void entities_free(void);
+
 // Creates a new entity with no components, returns the handle of that entity.
 EntityHandle entities_new(void);
 // Returns an EntityHandleVector of all entity handles that have all components

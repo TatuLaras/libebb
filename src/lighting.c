@@ -1,7 +1,6 @@
 #include "lighting.h"
 
 #include "handles.h"
-#include "scene.h"
 #include <assert.h>
 #include <raylib.h>
 #include <raymath.h>
@@ -49,69 +48,15 @@ static inline LightingShader shader_init(const char *vertex,
     return lighting_shader;
 }
 
-void lighting_scene_init(Color ambient_color, const char *vert_shader,
-                         const char *entity_frag_shader,
-                         const char *terrain_frag_shader) {
-    lighting_scene.ambient_color = ambient_color;
-
-    lighting_scene.base_shader = shader_init(vert_shader, entity_frag_shader);
-    lighting_scene.terrain_shader =
-        shader_init(vert_shader, terrain_frag_shader);
-
-    return;
-}
-
-int lighting_scene_add_light(LightSource light,
-                             LightSourceHandle *out_light_source_handle) {
-    if (lighting_scene.lights_size >= LIGHTING_MAX_LIGHTS)
-        return 1;
-
-    // Connect shader locations
-
-    if (out_light_source_handle)
-        *out_light_source_handle = lighting_scene.lights_size;
-
-    lighting_scene.lights[lighting_scene.lights_size++] = light;
-
-    lighting_shader_data_update();
-
-    return 0;
-}
-
-void lighting_scene_add_material(Material *material) {
-    material->shader = lighting_scene.base_shader.shader;
-}
-
-void lighting_scene_add_terrain_material(Material *material) {
-    material->shader = lighting_scene.terrain_shader.shader;
-}
-
-void lighting_scene_add_entity(Entity *entity) {
-    Model *model = scene_entity_get_model(entity);
-    assert(model->meshCount);
-    lighting_scene_add_material(&model->materials[0]);
-}
-
-LightSource *lighting_scene_get_light(LightSourceHandle light_handle) {
-    if (light_handle >= lighting_scene.lights_size)
-        return 0;
-    return lighting_scene.lights + light_handle;
-}
-
-void lighting_scene_set_enabled(uint32_t enabled) {
-    lighting_scene.is_shading_disabled = !enabled;
-    lighting_shader_data_update();
-}
-
 static inline int
 lighting_shader_update_light_source(LightingShader *lighting_shader,
                                     LightSourceHandle light_handle,
-                                    Vector3 offset) {
-    if (light_handle >= lighting_scene.lights_size)
+                                    Vector3 offset, int full_update) {
+    if (light_handle >= lighting_scene.lights_size && !full_update)
         return 1;
 
     LightSource *light = lighting_scene.lights + light_handle;
-    if (light->type == LIGHT_NULL)
+    if (light->type == LIGHT_NULL && !full_update)
         return 1;
 
     int enabled = !light->is_disabled;
@@ -149,7 +94,8 @@ lighting_shader_update_light_source(LightingShader *lighting_shader,
     return 0;
 }
 
-static inline void lighting_shader_update(LightingShader *lighting_shader) {
+static inline void lighting_shader_update(LightingShader *lighting_shader,
+                                          int full_update) {
     float ambient_color[4] = {
         (float)lighting_scene.ambient_color.r / (float)255,
         (float)lighting_scene.ambient_color.g / (float)255,
@@ -165,21 +111,87 @@ static inline void lighting_shader_update(LightingShader *lighting_shader) {
 
     for (size_t i = 0; i < LIGHTING_MAX_LIGHTS; i++) {
         if (lighting_shader_update_light_source(lighting_shader, i,
-                                                Vector3Zero()))
+                                                Vector3Zero(), full_update))
             break;
     }
 }
 
+static inline void lighting_shader_data_update_ex(int full_update) {
+    lighting_shader_update(&lighting_scene.base_shader, full_update);
+    lighting_shader_update(&lighting_scene.terrain_shader, full_update);
+}
+
+void lighting_scene_init(Color ambient_color, const char *vert_shader,
+                         const char *entity_frag_shader,
+                         const char *terrain_frag_shader) {
+    lighting_scene.ambient_color = ambient_color;
+
+    lighting_scene.base_shader = shader_init(vert_shader, entity_frag_shader);
+    lighting_scene.terrain_shader =
+        shader_init(vert_shader, terrain_frag_shader);
+
+    return;
+}
+
+int lighting_scene_add_light(LightSource light,
+                             LightSourceHandle *out_light_source_handle) {
+    if (lighting_scene.lights_size >= LIGHTING_MAX_LIGHTS)
+        return 1;
+
+    // Connect shader locations
+
+    if (out_light_source_handle)
+        *out_light_source_handle = lighting_scene.lights_size;
+
+    lighting_scene.lights[lighting_scene.lights_size++] = light;
+
+    lighting_shader_data_update();
+
+    return 0;
+}
+
+void lighting_scene_remove_light(LightSourceHandle handle) {
+    if (lighting_scene.lights_size == 0)
+        return;
+
+    if (handle < lighting_scene.lights_size - 1) {
+        lighting_scene.lights[handle] =
+            lighting_scene.lights[lighting_scene.lights_size - 1];
+    }
+
+    lighting_scene.lights[--lighting_scene.lights_size] = (LightSource){0};
+
+    lighting_shader_data_update_ex(1);
+}
+
+Shader lighting_scene_get_base_shader(void) {
+    return lighting_scene.base_shader.shader;
+}
+
+Shader lighting_scene_get_terrain_shader(void) {
+    return lighting_scene.terrain_shader.shader;
+}
+
+LightSource *lighting_scene_get_light(LightSourceHandle light_handle) {
+    if (light_handle >= lighting_scene.lights_size)
+        return 0;
+    return lighting_scene.lights + light_handle;
+}
+
+void lighting_scene_set_enabled(uint32_t enabled) {
+    lighting_scene.is_shading_disabled = !enabled;
+    lighting_shader_data_update();
+}
+
 void lighting_shader_data_update(void) {
-    lighting_shader_update(&lighting_scene.base_shader);
-    lighting_shader_update(&lighting_scene.terrain_shader);
+    lighting_shader_data_update_ex(0);
 }
 
 void lighting_light_update(LightSourceHandle light_handle, Vector3 offset) {
     lighting_shader_update_light_source(&lighting_scene.base_shader,
-                                        light_handle, offset);
+                                        light_handle, offset, 0);
     lighting_shader_update_light_source(&lighting_scene.terrain_shader,
-                                        light_handle, offset);
+                                        light_handle, offset, 0);
 }
 
 void lighting_scene_set_ambient_color(Color color) {

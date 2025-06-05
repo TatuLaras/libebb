@@ -25,7 +25,7 @@ void terrain_init(uint32_t width) {
         .material = LoadMaterialDefault(),
     };
 
-    lighting_scene_add_terrain_material(&terrain.material);
+    terrain.material.shader = lighting_scene_get_terrain_shader();
 }
 
 BoundingBox terrain_get_bounds(void) {

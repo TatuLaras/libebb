@@ -2,7 +2,9 @@
 
 #include "assets.h"
 #include "common.h"
+#include "firewatch.h"
 #include "handles.h"
+#include "lighting.h"
 #include "skyboxes.h"
 #include "texture_load.h"
 #include <assert.h>
@@ -17,24 +19,44 @@
 static Scene scene = {0};
 static Model skybox_model = {0};
 
-// Loads a model of asset name `asset_name` from the asset directory (see
-// settings.h).
-static inline Model load_asset_model(AssetHandle handle,
-                                     const char *asset_directory) {
-    char *asset_name = assets_get_name(handle);
-    assert(asset_name);
+static inline void load_model(const char *filepath, ModelHandle handle) {
+    // Preserve textures
+    Texture texture = {0};
+    Texture unlit_texture = {0};
+    if (scene.models.data[handle].materialCount) {
+        texture = scene.models.data[handle]
+                      .materials[0]
+                      .maps[MATERIAL_MAP_DIFFUSE]
+                      .texture;
+        unlit_texture = scene.models.data[handle]
+                            .materials[0]
+                            .maps[MATERIAL_MAP_DIFFUSE + 1]
+                            .texture;
+    }
 
-    char filepath[MAX_PATH_LENGTH + 1] = {0};
+    if (scene.models.data[handle].meshes)
+        UnloadModel(scene.models.data[handle]);
 
-    strcpy(filepath, asset_directory);
-    strcat(filepath, asset_name);
-    strcat(filepath, ".glb");
+    scene.models.data[handle] = LoadModel(filepath);
+    assert(scene.models.data[handle].meshes);
+    scene.models.data[handle].materials[0].shader =
+        lighting_scene_get_base_shader();
 
-    Model model = LoadModel(filepath);
-    if (!model.meshCount)
-        return (Model){0};
-    texture_load_model_aseprite_texture(filepath, &model);
-    return model;
+    // Load old textures
+    scene.models.data[handle].materials[0].maps[MATERIAL_MAP_DIFFUSE].texture =
+        texture;
+    scene.models.data[handle]
+        .materials[0]
+        .maps[MATERIAL_MAP_DIFFUSE + 1]
+        .texture = unlit_texture;
+}
+
+static inline void load_texture(const char *filepath, ModelHandle handle) {
+    Model *model = modelvec_get(&scene.models, handle);
+    assert(model);
+    assert(model->materialCount);
+    assert(model->meshCount);
+    texture_load_model_texture(filepath, model);
 }
 
 void scene_init(void) {
@@ -70,7 +92,6 @@ int scene_add(Entity entity, EntityHandle *out_entity_handle,
         assert(scene_entity_asset_name);
 
         if (!strcmp(asset_name, scene_entity_asset_name)) {
-            // Needs to not be a private instance of a model
             Model *model_data =
                 modelvec_get(&scene.models, scene_entity->model_handle);
             assert(model_data);
@@ -83,11 +104,33 @@ int scene_add(Entity entity, EntityHandle *out_entity_handle,
 
     // If not, load model
     if (!match_found) {
-        Model model = load_asset_model(entity.asset_handle, asset_directory);
-        if (!model.meshCount)
-            return 1;
+        entity.model_handle = modelvec_append(&scene.models, (Model){0});
 
-        entity.model_handle = modelvec_append(&scene.models, model);
+        char *asset_filename = assets_get_name(entity.asset_handle);
+        assert(asset_filename);
+
+        char texture_filepath[MAX_PATH_LENGTH] = {0};
+        char model_filepath[MAX_PATH_LENGTH] = {0};
+
+        strcpy(texture_filepath, asset_directory);
+        strcat(texture_filepath, asset_filename);
+        strcpy(model_filepath, asset_directory);
+        strcat(model_filepath, asset_filename);
+
+        strcat(model_filepath, ".glb");
+        strcat(texture_filepath, ".aseprite");
+
+#ifndef NO_HOT_RELOAD
+        firewatch_new_file_ex(model_filepath, 0, entity.model_handle,
+                              LOAD_KIND_MODEL);
+        firewatch_new_file_ex(texture_filepath, 0, entity.model_handle,
+                              LOAD_KIND_TEXTURE);
+#endif
+
+        load_model(model_filepath, entity.model_handle);
+        load_texture(texture_filepath, entity.model_handle);
+
+        scene_check_for_model_file_updates();
     }
 
     scene.entities[scene.entities_used++] = entity;
@@ -107,6 +150,22 @@ Entity *scene_get_entity(EntityHandle handle) {
     if (handle >= scene.entities_used)
         return 0;
     return scene.entities + handle;
+}
+
+void scene_check_for_model_file_updates(void) {
+    static LoadRequest request = {0};
+    while (firewatch_request_stack_pop(&request)) {
+        switch (request.kind) {
+        case LOAD_KIND_MODEL:
+            load_model(request.filepath, request.cookie);
+            break;
+        case LOAD_KIND_TEXTURE:
+            load_texture(request.filepath, request.cookie);
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 void scene_free(void) {

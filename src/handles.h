@@ -11,4 +11,11 @@ typedef size_t AssetHandle;
 typedef size_t SkyboxHandle;
 typedef size_t TerrainTextureHandle;
 
+enum {
+    LOAD_KIND_MODEL,
+    LOAD_KIND_TEXTURE,
+    LOAD_KIND_TERRAIN_TEXTURE,
+    LOAD_KIND_SKYBOX,
+};
+
 #endif

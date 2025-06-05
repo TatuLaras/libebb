@@ -36,6 +36,10 @@ void test_has_suffix(void) {
     TEST_ASSERT_FALSE(has_suffix("astringsuffix", "gsuffi"));
 }
 
+void test_has_suffix_true_on_equal_strings(void) {
+    TEST_ASSERT_TRUE(has_suffix("somestring", "somestring"));
+}
+
 int main(void) {
     UNITY_BEGIN();
 
@@ -43,6 +47,7 @@ int main(void) {
     RUN_TEST(test_quantize);
     RUN_TEST(test_strip_filename);
     RUN_TEST(test_has_suffix);
+    RUN_TEST(test_has_suffix_true_on_equal_strings);
 
     return UNITY_END();
 }

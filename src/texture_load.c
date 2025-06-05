@@ -2,31 +2,22 @@
 
 #include "aseprite_texture.h"
 #include <raylib.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
 
-static uint64_t file_last_modified(const char *filepath) {
-    struct stat attr;
-    if (stat(filepath, &attr))
-        return 0;
-    return attr.st_mtim.tv_sec;
-}
-
 // Replaces last three characters with "aseprite".
-static char *get_corresponding_aseprite_file(const char *src) {
-    size_t length = strlen(src);
-    if (length < 3)
-        return 0;
-    size_t target_length = length + 6;
-
-    char *destination = (char *)malloc(target_length);
-    memcpy(destination, src, length);
-    destination[target_length - 9] = 0;
-    strcat(destination, "aseprite");
-
-    return destination;
-}
+// static char *get_corresponding_aseprite_file(const char *src) {
+//     size_t length = strlen(src);
+//     if (length < 3)
+//         return 0;
+//     size_t target_length = length + 6;
+//
+//     char *destination = (char *)malloc(target_length);
+//     memcpy(destination, src, length);
+//     destination[target_length - 9] = 0;
+//     strcat(destination, "aseprite");
+//
+//     return destination;
+// }
 
 Texture texture_load_aseprite_texture(const char *filepath) {
     ImageData image_data = aseprite_load(filepath);
@@ -39,10 +30,8 @@ Texture texture_load_aseprite_texture(const char *filepath) {
     return texture;
 }
 
-void texture_load_model_aseprite_texture(const char *model_filepath,
-                                         Model *model) {
-    char *texture_file = get_corresponding_aseprite_file(model_filepath);
-    ImageData image_data = aseprite_load(texture_file);
+void texture_load_model_texture(const char *filepath, Model *model) {
+    ImageData image_data = aseprite_load(filepath);
 
     if (image_data.base_image.data) {
         Texture texture = LoadTextureFromImage(image_data.base_image);
@@ -58,5 +47,4 @@ void texture_load_model_aseprite_texture(const char *model_filepath,
     }
 
     aseprite_image_data_free(&image_data);
-    free(texture_file);
 }

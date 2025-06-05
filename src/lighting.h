@@ -55,7 +55,7 @@ typedef struct {
     Color ambient_color;
 } LightingScene;
 
-// Initializes a lighting scene.
+// Initializes the lighting scene.
 void lighting_scene_init(Color ambient_color, const char *vert_shader,
                          const char *entity_frag_shader,
                          const char *terrain_frag_shader);
@@ -64,12 +64,14 @@ void lighting_scene_init(Color ambient_color, const char *vert_shader,
 // will be written to `out_light_source_handle`.
 int lighting_scene_add_light(LightSource light,
                              LightSourceHandle *out_light_source_handle);
-// Applies the lighting scene shader to `material`.
-void lighting_scene_add_material(Material *material);
-// Applies the lighting scene shader to terrain material `material`.
-void lighting_scene_add_terrain_material(Material *material);
-// Applies the lighting scene shader to `entity`.
-void lighting_scene_add_entity(Entity *entity);
+// Removes light `handle` from the lighting scene.
+void lighting_scene_remove_light(LightSourceHandle handle);
+
+// Get lighting scene shader
+Shader lighting_scene_get_base_shader(void);
+// Get lighting scene terrain shader
+Shader lighting_scene_get_terrain_shader(void);
+
 // Sets whether or not lighting calculations are enabled in the lighting scene.
 // If enabled is 0, the scene will be unlit.
 void lighting_scene_set_enabled(uint32_t enabled);

@@ -284,7 +284,10 @@ int scene_file_load(FILE *fp, const char *skybox_directory,
 
         Entity *added_entity = scene_get_entity(entity_handle);
         assert(added_entity);
-        lighting_scene_add_entity(added_entity);
+        Model *model = scene_entity_get_model(added_entity);
+        assert(model->meshCount);
+        assert(model->materialCount);
+        model->materials[0].shader = lighting_scene_get_base_shader();
     }
 
     offset += header.entity_size * header.entity_count;

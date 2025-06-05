@@ -52,4 +52,7 @@ SkyboxHandle scene_get_skybox(void);
 
 void scene_render_properties_menu(void);
 
+// Call this every frame to enable hot-reload functionality.
+void scene_check_for_model_file_updates(void);
+
 #endif
